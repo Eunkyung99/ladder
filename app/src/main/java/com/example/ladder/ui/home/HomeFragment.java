@@ -37,6 +37,13 @@ import com.naver.maps.map.NaverMap;
 import com.naver.maps.map.UiSettings;
 import com.naver.maps.map.util.FusedLocationSource;
 
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserFactory;
+
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLEncoder;
 import java.util.concurrent.Executor;
 
 public class HomeFragment extends Fragment implements OnMapReadyCallback,
@@ -119,5 +126,57 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback,
                 locationSource.onRequestPermissionsResult(requestCode, permissions, grantResults);
                 return;
         }
+    }
+
+    public String getMarketList(){
+        String clientID = "WC1MOyDfJCF9_Fyi_wgx";
+        String clientSecret = "2hNiAO1abL";
+        StringBuffer sb = new StringBuffer();
+
+        try {
+            String text = URLEncoder.encode("슈퍼마켓", "UTF-8");
+            
+            String apiURL = "https://openapi.naver.com/v1/search/local.xml?query=" + text + "&display=10" + "&start=1";
+
+            URL url = new URL(apiURL);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            conn.setRequestProperty("X-Naver-Client-Id", clientID);
+            conn.setRequestProperty("X-Naver-Client-Secret", clientSecret);
+
+            XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
+            XmlPullParser xpp = factory.newPullParser();
+            String tag;
+            //inputStream으로부터 xml값 받기
+            xpp.setInput(new InputStreamReader(conn.getInputStream(), "UTF-8"));
+
+            xpp.next();
+            int eventType = xpp.getEventType();
+
+            while(eventType != XmlPullParser.END_DOCUMENT){
+                switch(eventType){
+                    case XmlPullParser.START_TAG:
+                        tag = xpp.getName(); //태그 이름 얻어오기
+                        if(tag.equals("item"));
+                        else if (tag.equals("xmap")){
+                            xpp.next();
+                            sb.append(xpp.getText());
+                        }
+                        else if (tag.equals("ymap")){
+                            xpp.next();
+                            sb.append(xpp.getText());
+                            sb.append("\n");
+                        }
+                        break;
+                }
+                eventType = xpp.next();
+            }
+
+        }catch (Exception e){
+            return e.toString();
+        }
+
+        return sb.toString();
+
     }
 }
